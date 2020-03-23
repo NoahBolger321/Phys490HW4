@@ -1,8 +1,5 @@
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as func
-from torch.autograd import Variable
 
 
 class VAE(nn.Module):

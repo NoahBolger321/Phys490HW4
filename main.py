@@ -1,13 +1,14 @@
 from data import MnistData
+import pathlib
 import json
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.optim as optim
 from var_auto_enc import VAE
 import argparse
-# from helpers import calc_accuracy
 import torch.nn.functional as func
+from torchvision.utils import save_image
+import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
@@ -24,6 +25,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch Tutorial')
     parser.add_argument('-p', dest='param', metavar='data/parameters.json',
                         help='parameter file name')
+    parser.add_argument('-o', dest='output',
+                        help='output directory', default="output/")
+    parser.add_argument('-n', dest='num_samples', default=10,
+                        help='number fo sample images produced')
     args = parser.parse_args()
 
     with open(args.param) as paramfile:
@@ -37,8 +42,7 @@ if __name__ == '__main__':
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
         return BCE + KLD
 
-    test_losses = []
-    test_accuracys = []
+    train_loss = []
 
     for epoch in range(1, int(param['num_epochs']) + 1):
             targets = torch.from_numpy(Y_train).long()
@@ -46,6 +50,7 @@ if __name__ == '__main__':
             recon_batch, mu, log_var = model.forward(X_train)
 
             loss = loss_func(recon_batch, X_train, mu, log_var)
+            train_loss.append(loss)
             optimizer.zero_grad()
 
             loss.backward()
@@ -53,8 +58,15 @@ if __name__ == '__main__':
 
             print('Epoch [{}/{}]'.format(epoch, param['num_epochs'])+\
                   '\tTraining Loss: {:.4f}'.format(loss.item()))
-                  # '\tTest Loss: {:.4f}'.format(test_loss))
-                  # '\tAccuracy: {:.4f}'.format(accuracy))
-    print(recon_batch)
-    # print('\tFinal test loss: {:.4f}'.format(test_losses[-1]) + \
-    #       '\tFinal test accuracy: {:.4f}'.format(test_accuracys[-1]))
+
+    pathlib.Path('output/').mkdir(parents=True, exist_ok=True)
+    for i in range(1, int(args.num_samples) + 1):
+        save_image(recon_batch.view(recon_batch.size(0), 1, 14, 14)[i], f'{args.output}{i}.png')
+
+    plt.plot(range(1, int(param['num_epochs']) + 1), train_loss)
+    plt.savefig(f'{args.output}loss.png')
+
+    #TODO: save loss vs. epochs graph
+    #TODO: take number from command line for sample images
+    #TODO: figure out sample images
+    #TODO: output dir (create if not exists)
