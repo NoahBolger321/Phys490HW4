@@ -40,12 +40,11 @@ if __name__ == '__main__':
     def loss_func(recon_x, x, mu, log_var):
         BCE = func.binary_cross_entropy(recon_x.view(recon_x.size(0), 196), x.view(x.size(0), 196))
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-        return BCE + KLD
+        return (BCE + KLD) / x.size(0)
 
     train_loss = []
 
     for epoch in range(1, int(param['num_epochs']) + 1):
-            targets = torch.from_numpy(Y_train).long()
 
             recon_batch, mu, log_var = model.forward(X_train)
 
@@ -64,9 +63,6 @@ if __name__ == '__main__':
         save_image(recon_batch.view(recon_batch.size(0), 1, 14, 14)[i], f'{args.output}{i}.png')
 
     plt.plot(range(1, int(param['num_epochs']) + 1), train_loss)
+    plt.xlabel('Number of Epcohs')
+    plt.ylabel('Training Loss')
     plt.savefig(f'{args.output}loss.png')
-
-    #TODO: save loss vs. epochs graph
-    #TODO: take number from command line for sample images
-    #TODO: figure out sample images
-    #TODO: output dir (create if not exists)

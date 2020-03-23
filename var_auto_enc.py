@@ -7,24 +7,26 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
         self.n_pixels = n_pixels
 
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(1024, 512)
-        self.fc3 = nn.Linear(512, 1024)
+        self.fc1 = nn.Linear(256, 64)
+        self.fc2 = nn.Linear(256, 64)
+        self.fc3 = nn.Linear(64, 196)
 
         self.encoder = nn.Sequential(
             # encoder layers
-            nn.Conv2d(1, 32, 4, 2, 1),
-            nn.ReLU(True),
-            nn.Conv2d(32, 64, 4, 1, 0),
-            # nn.BatchNorm2d(64),
-            nn.ReLU(True)
+            nn.Conv2d(1, 32, kernel_size=3, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2),
+            nn.ReLU()
         )
         self.decoder = nn.Sequential(
             # decoder layers
-            nn.ConvTranspose2d(1024, 32, 4, 1, 0),
+            nn.ConvTranspose2d(196, 128, 4, 1, 0),
+            nn.BatchNorm2d(128),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(128, 32, 4, 1, 0),
             nn.BatchNorm2d(32),
             nn.ReLU(True),
-            nn.ConvTranspose2d(32, 1, 2, 4, 0),
+            nn.ConvTranspose2d(32, 1, 2, 2, 0),
             nn.Sigmoid()
         )
 
@@ -36,12 +38,11 @@ class VAE(nn.Module):
     def encode(self, x):
         encoder = self.encoder(x)
         x = encoder.view(encoder.size(0), -1)
-        # returns size [26492, 64, 3, 3]
         return self.fc1(x), self.fc2(x)
 
     def decode(self, x):
         x = self.fc3(x)
-        decoder = self.decoder(x.view(x.size(0), 1024, 1, 1))
+        decoder = self.decoder(x.view(x.size(0), 196, 1, 1))
         return decoder
 
     def forward(self, x):
