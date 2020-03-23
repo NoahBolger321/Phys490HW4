@@ -7,7 +7,7 @@ import torch.optim as optim
 from var_auto_enc import VAE
 import argparse
 # from helpers import calc_accuracy
-
+import torch.nn.functional as func
 
 if __name__ == '__main__':
 
@@ -29,37 +29,32 @@ if __name__ == '__main__':
     with open(args.param) as paramfile:
         param = json.load(paramfile)
 
-    # model = VAE(14*14)
-    # optimizer = optim.Adam(model.parameters(), lr=param['learning_rate'])
-    # loss_func = nn.CrossEntropyLoss()
-    #
-    # test_losses = []
-    # test_accuracys = []
-    #
-    # for epoch in range(1, int(param['num_epochs']) + 1):
-    #
-    #         inputs = torch.from_numpy(X_train)
-    #         targets = torch.from_numpy(Y_train).long()
-    #
-    #         output = model.forward(X_train)
-    #
-    #         loss = loss_func(output, targets.reshape(-1))
-    #         optimizer.zero_grad()
-    #
-    #         loss.backward()
-    #         optimizer.step()
-    #
-    #         if (epoch + 1) % 10 == 0:
-    #
-    #             test_loss, test_output, test_targets = model.test(X_test, Y_test, loss_func)
-    #             test_losses.append(test_loss)
-    #             # test_accuracys.append(calc_accuracy(test_output, test_targets))
-    #             #
-    #             # accuracy = calc_accuracy(output, targets)
-    #             print('Epoch [{}/{}]'.format(epoch+1, param['num_epochs'])+\
-    #                   '\tTraining Loss: {:.4f}'.format(loss.item())+\
-    #                   '\tTest Loss: {:.4f}'.format(test_loss))
-    #                   # '\tAccuracy: {:.4f}'.format(accuracy))
-    #
+    model = VAE(14*14)
+    optimizer = optim.Adam(model.parameters(), lr=param['learning_rate'])
+
+    def loss_func(recon_x, x, mu, log_var):
+        BCE = func.binary_cross_entropy(recon_x.view(recon_x.size(0), 196), x.view(x.size(0), 196))
+        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+        return BCE + KLD
+
+    test_losses = []
+    test_accuracys = []
+
+    for epoch in range(1, int(param['num_epochs']) + 1):
+            targets = torch.from_numpy(Y_train).long()
+
+            recon_batch, mu, log_var = model.forward(X_train)
+
+            loss = loss_func(recon_batch, X_train, mu, log_var)
+            optimizer.zero_grad()
+
+            loss.backward()
+            optimizer.step()
+
+            print('Epoch [{}/{}]'.format(epoch, param['num_epochs'])+\
+                  '\tTraining Loss: {:.4f}'.format(loss.item()))
+                  # '\tTest Loss: {:.4f}'.format(test_loss))
+                  # '\tAccuracy: {:.4f}'.format(accuracy))
+    print(recon_batch)
     # print('\tFinal test loss: {:.4f}'.format(test_losses[-1]) + \
     #       '\tFinal test accuracy: {:.4f}'.format(test_accuracys[-1]))

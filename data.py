@@ -14,7 +14,7 @@ class MnistData():
         mnist_df = pd.read_csv('data/even_mnist.csv', header=None, names=['data'])
 
         mnist_df['labels'] = pd.to_numeric(mnist_df['data'].str[-1])
-        mnist_df['data'] = mnist_df['data'].apply(lambda d: np.array(list(map(float, d.split()[:-1])), dtype=np.float32))
+        mnist_df['data'] = mnist_df['data'].apply(lambda d: np.array(list(map(float, d.split()[:-1])), dtype=np.float32)/255.0)
         self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(
                                                                 mnist_df['data'],
                                                                 mnist_df['labels'],
