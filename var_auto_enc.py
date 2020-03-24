@@ -50,11 +50,3 @@ class VAE(nn.Module):
         z = self.sampling(mu, logvar)
         decoded = self.decode(z)
         return decoded, mu, logvar
-
-    # def test(self, X_test, Y_test, loss):
-    #     self.eval()
-    #     with torch.no_grad():
-    #         targets = torch.from_numpy(Y_test).long()
-    #         output = self.forward(X_test)
-    #         cross_val = loss(output, targets)
-    #     return cross_val.item(), output, Y_test
